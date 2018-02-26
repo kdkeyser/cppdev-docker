@@ -1,5 +1,6 @@
 FROM ubuntu:16.04
 
+
 RUN apt-get update -q && apt-get install -y --no-install-recommends \
   sudo \
   gcc \
@@ -18,19 +19,23 @@ RUN apt-get update -q && apt-get install -y --no-install-recommends \
   libxkbfile1 \
   libx11-xcb1
 
-
-ENV VSCODE_VERSION 1.19.2
+ENV VSCODE_VERSION 1.20.1
 RUN wget -O /tmp/vscode.deb https://vscode-update.azurewebsites.net/$VSCODE_VERSION/linux-deb-x64/stable/
 RUN dpkg -i /tmp/vscode.deb && rm /tmp/vscode.deb
 
-RUN adduser developer
+RUN groupadd -g 1000 developer && useradd -u 1000 -g 1000 developer
+RUN echo "developer:developer" | chpasswd 
+RUN adduser developer sudo 
+RUN mkdir /home/developer
+RUN chown developer /home/developer
+
 USER developer 
 RUN echo 0 | code --install-extension ms-vscode.cpptools
 
 USER root
-ENV PROXYGEN_VERSION 2018.01.22.00
-ADD proxygen-$PROXYGEN_VERSION.tar.gz /opt
-RUN cd /opt/proxygen-$PROXYGEN_VERSION/proxygen && ./deps.sh && ./reinstall.sh
+ENV PROXYGEN_VERSION 2018.02.26.00
+ADD https://github.com/facebook/proxygen/archive/v$PROXYGEN_VERSION.tar.gz /opt
+RUN cd /opt && tar -zxpvf v$PROXYGEN_VERSION.tar.gz && cd /opt/proxygen-$PROXYGEN_VERSION/proxygen && ./deps.sh && ./reinstall.sh
 
 USER developer
 
